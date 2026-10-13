@@ -1,0 +1,131 @@
+name: seal-build
+
+# Build-and-pack only. The tests (4 Node legs of `npm test` plus the headless
+# Chrome QUnit suite) run on Travis via .travis.yml.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # jQuery 2.2.x publishes from the separate jquery-dist repo
+      # (build/release/dist.js copies over it without deleting old files).
+      # The 2.2.0 release commit 6fc01e29 sits on efbdc6e3 ("Release 1.12.0").
+      - name: Clone jquery-dist at the 2.2.0 release parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone https://github.com/jquery/jquery-dist.git "$RUNNER_TEMP/jqdist"
+          git -C "$RUNNER_TEMP/jqdist" checkout efbdc6e3
+          git -C "$RUNNER_TEMP/jqdist" log --oneline -1
+
+      - name: Write container build script
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/seal"
+          cat > "$RUNNER_TEMP/seal/build.sh" <<'SEAL_BUILD_EOF'
+          set -euo pipefail
+          # build/tasks/build.js appends $COMMIT to the embedded version
+          unset COMMIT
+          # the node:5 image defaults npm to loglevel=info (one line per request)
+          export NPM_CONFIG_LOGLEVEL=warn
+          # Registry time machine at the 2.2.0 release date. npm 3 does not use the
+          # URL-embedded ":<date>@" form as credentials once always-auth is on
+          # ("This request requires auth credentials"), so pass the date as _authToken.
+          npm config set registry https://time-machines-npm.sealsecurity.io/
+          npm config set //time-machines-npm.sealsecurity.io/:_authToken 2016-01-08T20:03:43.280Z
+          npm config set always-auth true
+          node --version
+          npm --version
+
+          # babel-core 5 (grunt-babel) -> line-numbers@0.2.0 pins left-pad@0.0.3 exactly;
+          # the left-pad republish rewrote its registry timestamp to 2016-03-22, so the
+          # time machine hides it. Seed it from the live registry (npm 3 reuses the
+          # top-level copy); a later time-machine date would pull uglify-js 2.6.2.
+          npm install --registry=https://registry.npmjs.org/ --always-auth=false left-pad@0.0.3
+
+          # Pin @DATE to the value in the released dist/jquery.js header.
+          # (build/ is not captured by the version patch, so the pin lives here.)
+          sed -i 's|( new Date() ).toISOString().replace( /:\\d+\\.\\d+Z\$/, "Z" )|"2016-01-08T20:02Z"|' build/tasks/build.js
+          if grep -n 'new Date()' build/tasks/build.js; then
+            echo "ERROR: @DATE pin did not apply to build/tasks/build.js"
+            exit 1
+          fi
+          grep -n '"2016-01-08T20:02Z"' build/tasks/build.js
+
+          # Keep the checked-out dist files to compare against after the rebuild
+          mkdir -p /tmp/committed-dist
+          cp dist/jquery.js dist/jquery.min.js dist/jquery.min.map /tmp/committed-dist/
+
+          npm install
+          # grunt default = build + lint + uglify + dist + node_smoke_tests + compare_size
+          ./node_modules/.bin/grunt
+
+          for f in jquery.js jquery.min.js jquery.min.map; do
+            if cmp -s "dist/$f" "/tmp/committed-dist/$f"; then
+              echo "dist/$f: identical to the committed copy"
+            else
+              echo "dist/$f: differs from the committed copy"
+            fi
+          done
+
+          # Assemble the publish tree exactly as build/release/dist.js does:
+          # copy over the jquery-dist checkout without deleting old files.
+          DISTPKG=/tmp/distpkg
+          cp -a /jqdist "$DISTPKG"
+          rm -rf "$DISTPKG/.git"
+          mkdir -p "$DISTPKG/dist"
+          cp -f /work/dist/jquery.js /work/dist/jquery.min.js /work/dist/jquery.min.map "$DISTPKG/dist/"
+          cp -rf /work/src /work/LICENSE.txt /work/AUTHORS.txt /work/package.json "$DISTPKG/"
+          # generateBower() in build/release/dist.js (no trailing newline)
+          node -e 'var fs = require("fs"), pkg = require("/tmp/distpkg/package.json");
+            fs.writeFileSync("/tmp/distpkg/bower.json", JSON.stringify({
+              name: pkg.name, main: pkg.main, license: "MIT",
+              ignore: [ "package.json" ], keywords: pkg.keywords
+            }, null, 2));'
+
+          cd "$DISTPKG"
+          find . -type f | sort
+          count="$(find . -type f | wc -l)"
+          echo "publish tree file count: $count"
+          if [ "$count" -ne 114 ]; then
+            echo "ERROR: expected 114 files in the publish tree, found $count"
+            exit 1
+          fi
+
+          chown -R "$HOST_UID:$HOST_GID" "$DISTPKG"
+          npm pack
+          mkdir -p /work/seal-out
+          mv jquery-2.2.0.tgz /work/seal-out/
+          tar tvzf /work/seal-out/jquery-2.2.0.tgz
+          echo "tarball entries: $(tar tzf /work/seal-out/jquery-2.2.0.tgz | wc -l)"
+          chown -R "$HOST_UID:$HOST_GID" /work
+          SEAL_BUILD_EOF
+          chmod +x "$RUNNER_TEMP/seal/build.sh"
+
+      # node:5 = Node 5.2.0 / npm 3.3.12, the toolchain that packed the public tarball
+      - name: Build and pack (node:5)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -v "$RUNNER_TEMP/seal":/seal \
+            -v "$RUNNER_TEMP/jqdist":/jqdist \
+            -w /work \
+            -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
+            node:5 bash /seal/build.sh
+          ls -la seal-out
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jquery-2.2.0
+          path: seal-out/jquery-2.2.0.tgz
+          if-no-files-found: error

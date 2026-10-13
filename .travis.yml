@@ -1,7 +1,92 @@
 language: node_js
 sudo: false
-node_js:
-- "0.10"
-- "0.12"
-- "4"
-- "5"
+
+# jobs.include replaces the top-level node_js matrix, so every leg is listed here.
+#
+# Every leg pins the npm registry to the 2.2.0 release date (2016-01-08). babel-core 5
+# (grunt-babel) -> line-numbers@0.2.0 pins left-pad@0.0.3 exactly, whose registry
+# timestamp was rewritten to 2016-03-22 by the left-pad republish, so the time
+# machine hides it; seed that one package from the live registry first (npm 2 and
+# npm 3 both reuse the top-level copy). Moving the date past 2016-03-22 instead would
+# pull uglify-js 2.6.2 into the build and change dist/jquery.min.js.
+jobs:
+  include:
+    - name: "Node 0.10 - npm test"
+      dist: xenial
+      node_js: '0.10'
+      before_install:
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+        - npm install --registry=https://registry.npmjs.org/ left-pad@0.0.3
+      # jsdom 5.6.1 does not load on Node 0.x, which makes test_fast register
+      # zero tasks (gh-2519); install jsdom@3 as upstream's old_jsdom task does
+      # so node_smoke_tests actually run.
+      before_script:
+        - npm install jsdom@3
+
+    - name: "Node 0.12 - npm test"
+      dist: xenial
+      node_js: '0.12'
+      before_install:
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+        - npm install --registry=https://registry.npmjs.org/ left-pad@0.0.3
+      before_script:
+        - npm install jsdom@3
+
+    - name: "Node 4 - npm test"
+      dist: xenial
+      node_js: '4'
+      before_install:
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+        - npm install --registry=https://registry.npmjs.org/ left-pad@0.0.3
+
+    - name: "Node 5 - npm test"
+      dist: xenial
+      node_js: '5'
+      before_install:
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+        - npm install --registry=https://registry.npmjs.org/ left-pad@0.0.3
+
+    # The QUnit unit suite (test/unit/*.js) is browser-only (upstream ran it on
+    # TestSwarm); run it in headless Chrome against dist/jquery.js built from src.
+    - name: "Browser QUnit suite - headless Chrome"
+      dist: focal
+      node_js: '20'
+      addons:
+        chrome: stable
+      before_install:
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+      # Build under Node 5 (npm 3); the left-pad seed must run after `nvm use 5`
+      # (npm 10 would reify and rewrite package.json).
+      install:
+        - nvm install 5 && nvm use 5
+        - npm config set registry https://:2016-01-08T20%3A03%3A43.280Z@time-machines-npm.sealsecurity.io/
+        - npm install --registry=https://registry.npmjs.org/ left-pad@0.0.3
+        - npm install
+        - ./node_modules/.bin/grunt
+        - nvm use 20
+        # Driver lives outside the repo so npm 10 never touches the Node 5 install;
+        # it is not part of the 2016 snapshot, so it comes from the live registry.
+        - >-
+          mkdir -p /tmp/driver && cd /tmp/driver && npm init -y &&
+          npm install --registry=https://registry.npmjs.org/ puppeteer-core@22 &&
+          cd "$TRAVIS_BUILD_DIR"
+      script:
+        - export CHROME_PATH="$(command -v google-chrome)"
+        - >-
+          "$CHROME_PATH" --version && php --version && node --version
+        # Several workers are load-bearing: single-process php -S starves the
+        # fixture iframes the suite opens. The ajax module needs test/data/*.php.
+        - >-
+          (PHP_CLI_SERVER_WORKERS=10 php -S 127.0.0.1:8000 -t . > /tmp/php.log 2>&1 &)
+        - >-
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/test/ > /dev/null && break; sleep 1; done;
+          curl -sf -o /dev/null http://127.0.0.1:8000/test/
+        # Excluded: "ajax: #14379 - jQuery.ajax() on unload" fires a synchronous XHR
+        # from a window unload handler; Chrome (>= ~80) forbids sync XHR during page
+        # dismissal, so the request never reaches the server. Environment-only.
+        - >-
+          NODE_PATH=/tmp/driver/node_modules
+          SEAL_SKIP_TESTS="ajax: #14379 - jQuery.ajax() on unload"
+          node test/seal-browser-runner.js "http://127.0.0.1:8000/test/?dev"
+      after_failure:
+        - tail -n 100 /tmp/php.log
