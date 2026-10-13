@@ -36,7 +36,7 @@ QUnit.test( "ajax", function( assert ) {
 QUnit.test( "attributes", function( assert ) {
 	assert.expect( 6 );
 
-	var a = jQuery( "<a/>" ).appendTo( "#qunit-fixture" ),
+	var a = jQuery( "<a></a>" ).appendTo( "#qunit-fixture" ),
 		input = jQuery( "<input/>" ).appendTo( "#qunit-fixture" );
 
 	assert.strictEqual( a.attr( "foo", "bar" ).attr( "foo" ), "bar", ".attr getter/setter" );
@@ -56,7 +56,7 @@ if ( jQuery.css ) {
 QUnit.test( "css", function( assert ) {
 	assert.expect( 3 );
 
-	var div = jQuery( "<div/>" ).appendTo( "#qunit-fixture" );
+	var div = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" );
 
 	assert.strictEqual( div.css( "width", "50px" ).css( "width" ), "50px", ".css getter/setter" );
 
@@ -134,7 +134,7 @@ QUnit.test( "core", function( assert ) {
 QUnit.test( "data", function( assert ) {
 	assert.expect( 4 );
 
-	var elem = jQuery( "<div data-c='d'/>" ).appendTo( "#qunit-fixture" );
+	var elem = jQuery( "<div data-c='d'></div>" ).appendTo( "#qunit-fixture" );
 
 	assert.ok( !jQuery.hasData( elem[ 0 ] ), "jQuery.hasData - false" );
 	assert.strictEqual( elem.data( "a", "b" ).data( "a" ), "b", ".data getter/setter" );
@@ -146,7 +146,7 @@ QUnit.test( "dimensions", function( assert ) {
 	assert.expect( 3 );
 
 	var elem = jQuery(
-		"<div style='margin: 10px; padding: 7px; border: 2px solid black;' /> "
+		"<div style='margin: 10px; padding: 7px; border: 2px solid black;'></div> "
 	).appendTo( "#qunit-fixture" );
 
 	assert.strictEqual( elem.width( 50 ).width(), 50, ".width getter/setter" );
@@ -157,7 +157,7 @@ QUnit.test( "dimensions", function( assert ) {
 QUnit.test( "event", function( assert ) {
 	assert.expect( 1 );
 
-	var elem = jQuery( "<div/>" ).appendTo( "#qunit-fixture" );
+	var elem = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" );
 
 	elem
 		.on( "click", function() {
@@ -176,7 +176,7 @@ QUnit.test( "manipulation", function( assert ) {
 
 	var child,
 		elem1 = jQuery( "<div><span></span></div>" ).appendTo( "#qunit-fixture" ),
-		elem2 = jQuery( "<div/>" ).appendTo( "#qunit-fixture" );
+		elem2 = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" );
 
 	assert.strictEqual( elem1.text( "foo" ).text(), "foo", ".html getter/setter" );
 
@@ -184,7 +184,7 @@ QUnit.test( "manipulation", function( assert ) {
 
 		// Support: IE 8 only
 		// IE 8 prints tag names in upper case.
-		elem1.html( "<span/>" ).html().toLowerCase(),
+		elem1.html( "<span></span>" ).html().toLowerCase(),
 		"<span></span>",
 		".html getter/setter"
 	);
@@ -193,8 +193,8 @@ QUnit.test( "manipulation", function( assert ) {
 	assert.strictEqual( elem1.prepend( elem2 )[ 0 ].childNodes[ 0 ], elem2[ 0 ], ".prepend" );
 
 	child = elem1.find( "span" );
-	child.after( "<a/>" );
-	child.before( "<b/>" );
+	child.after( "<a></a>" );
+	child.before( "<b></b>" );
 
 	assert.strictEqual(
 
@@ -209,8 +209,9 @@ QUnit.test( "manipulation", function( assert ) {
 QUnit.test( "offset", function( assert ) {
 	assert.expect( 3 );
 
-	var parent = jQuery( "<div style='position:fixed;top:20px;'/>" ).appendTo( "#qunit-fixture" ),
-		elem = jQuery( "<div style='position:absolute;top:5px;'/>" ).appendTo( parent );
+	var parent = jQuery( "<div style='position:fixed;top:20px;'></div>" )
+			.appendTo( "#qunit-fixture" ),
+		elem = jQuery( "<div style='position:absolute;top:5px;'></div>" ).appendTo( parent );
 
 	assert.strictEqual( elem.offset().top, 25, ".offset getter" );
 	assert.strictEqual( elem.position().top, 5, ".position getter" );

@@ -554,7 +554,7 @@ QUnit.test( "animate duration 0", function( assert ) {
 	} );
 	this.clock.tick( 200 );
 
-	$elem = jQuery( "<div />" );
+	$elem = jQuery( "<div></div>" );
 	$elem.show( 0, function() {
 		assert.ok( true, "Show callback with no duration" );
 	} );
@@ -1538,9 +1538,9 @@ QUnit.test( "animate should set display for disconnected nodes", function( asser
 		$divTest = jQuery( "<div>test</div>" ),
 
 		// parentNode = null
-		$divEmpty = jQuery( "<div/>" ),
-		$divNone = jQuery( "<div style='display: none;'/>" ),
-		$divInline = jQuery( "<div style='display: inline;'/>" ),
+		$divEmpty = jQuery( "<div></div>" ),
+		$divNone = jQuery( "<div style='display: none;'></div>" ),
+		$divInline = jQuery( "<div style='display: inline;'></div>" ),
 		clock = this.clock;
 
 	assert.strictEqual( $divTest.show()[ 0 ].style.display, "block", "set display with show() for element with parentNode = document fragment" );
@@ -1559,7 +1559,7 @@ QUnit.test( "animate should set display for disconnected nodes", function( asser
 			jQuery( "<div>test</div>" ),
 
 			// parentNode = null
-			jQuery( "<div/>" )
+			jQuery( "<div></div>" )
 
 		], function() {
 			var callback = [ function() {
@@ -2291,8 +2291,8 @@ QUnit.test( "Respect display value on inline elements (#14824)", function( asser
 	assert.expect( 2 );
 
 	var clock = this.clock,
-		fromStyleSheet = jQuery( "<span id='span-14824' />" ),
-		fromStyleAttr = jQuery( "<span style='display: block;' />" );
+		fromStyleSheet = jQuery( "<span id='span-14824'></span>" ),
+		fromStyleAttr = jQuery( "<span style='display: block;'></span>" );
 
 	jQuery( "#qunit-fixture" ).append( fromStyleSheet, fromStyleAttr );
 

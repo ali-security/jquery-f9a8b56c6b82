@@ -298,7 +298,7 @@ QUnit.test( "getting dimensions shouldn't modify runtimeStyle see #9233", functi
 QUnit.test( "table dimensions", function( assert ) {
 	assert.expect( 2 );
 
-	var table = jQuery( "<table><colgroup><col/><col/></colgroup><tbody><tr><td></td><td>a</td></tr><tr><td></td><td>a</td></tr></tbody></table>" ).appendTo( "#qunit-fixture" ),
+	var table = jQuery( "<table><colgroup><col></col><col></col></colgroup><tbody><tr><td></td><td>a</td></tr><tr><td></td><td>a</td></tr></tbody></table>" ).appendTo( "#qunit-fixture" ),
 		tdElem = table.find( "td" ).first(),
 		colElem = table.find( "col" ).first().width( 300 );
 
@@ -460,7 +460,7 @@ QUnit.test( "allow modification of coordinates argument (gh-1848)", function( as
 	assert.expect( 1 );
 
 	var offsetTop,
-		element = jQuery( "<div/>" ).appendTo( "#qunit-fixture" );
+		element = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" );
 
 	element.offset( function( index, coords ) {
 		coords.top = 100;

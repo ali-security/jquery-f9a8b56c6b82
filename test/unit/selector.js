@@ -92,7 +92,7 @@ QUnit.test( "name", function( assert ) {
 QUnit.test( "selectors with comma", function( assert ) {
 	assert.expect( 4 );
 
-	var fixture = jQuery( "<div><h2><span/></h2><div><p><span/></p><p/></div></div>" );
+	var fixture = jQuery( "<div><h2><span></span></h2><div><p><span></span></p><p></p></div></div>" );
 
 	assert.equal( fixture.find( "h2, div p" ).filter( "p" ).length, 2, "has to find two <p>" );
 	assert.equal( fixture.find( "h2, div p" ).filter( "h2" ).length, 1, "has to find one <h2>" );
@@ -230,7 +230,7 @@ QUnit.test( "attributes", function( assert ) {
 	assert.t( "input[type=text]", "#form input[type=text]", [ "text1", "text2", "hidden2", "name" ] );
 	assert.t( "input[type=search]", "#form input[type=search]", [ "search" ] );
 
-	withScript = supportjQuery( "<div><span><script src=''/></span></div>" );
+	withScript = supportjQuery( "<div><span><script src=''></script></span></div>" );
 	assert.ok( withScript.find( "#moretests script[src]" ).has( "script" ), "script[src] (jQuery #13777)" );
 
 	div = document.getElementById( "foo" );
@@ -273,7 +273,7 @@ QUnit.test( "attributes", function( assert ) {
 QUnit.test( "disconnected nodes", function( assert ) {
 	assert.expect( 1 );
 
-	var $div = jQuery( "<div/>" );
+	var $div = jQuery( "<div></div>" );
 	assert.equal( $div.is( "div" ), true, "Make sure .is('nodeName') works on disconnected nodes." );
 } );
 

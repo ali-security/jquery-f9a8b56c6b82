@@ -13,7 +13,7 @@ QUnit.test( "css(String|Hash)", function( assert ) {
 	assert.notEqual( $child.css( "width" ), "20px", "Retrieving a width percentage on the child of a hidden div returns percentage" );
 	assert.notEqual( $child.css( "height" ), "20px", "Retrieving a height percentage on the child of a hidden div returns percentage" );
 
-	div = jQuery( "<div/>" );
+	div = jQuery( "<div></div>" );
 
 	// These should be "auto" (or some better value)
 	// temporarily provide "0px" for backwards compat
@@ -25,7 +25,7 @@ QUnit.test( "css(String|Hash)", function( assert ) {
 	assert.equal( div.css( "width" ), "4px", "Width on disconnected node." );
 	assert.equal( div.css( "height" ), "4px", "Height on disconnected node." );
 
-	div2 = jQuery( "<div style='display:none;'><input type='text' style='height:20px;'/><textarea style='height:20px;'/><div style='height:20px;'></div></div>" ).appendTo( "body" );
+	div2 = jQuery( "<div style='display:none;'><input type='text' style='height:20px;'/><textarea style='height:20px;'></textarea><div style='height:20px;'></div></div>" ).appendTo( "body" );
 
 	assert.equal( div2.find( "input" ).css( "height" ), "20px", "Height on hidden input." );
 	assert.equal( div2.find( "textarea" ).css( "height" ), "20px", "Height on hidden textarea." );
@@ -42,7 +42,7 @@ QUnit.test( "css(String|Hash)", function( assert ) {
 	assert.equal( parseFloat( jQuery( "#nothiddendiv" ).css( "width" ) ), 0, "Test negative width set to 0" );
 	assert.equal( parseFloat( jQuery( "#nothiddendiv" ).css( "height" ) ), 0, "Test negative height set to 0" );
 
-	assert.equal( jQuery( "<div style='display: none;'/>" ).css( "display" ), "none", "Styles on disconnected nodes" );
+	assert.equal( jQuery( "<div style='display: none;'></div>" ).css( "display" ), "none", "Styles on disconnected nodes" );
 
 	jQuery( "#floatTest" ).css( { "float": "right" } );
 	assert.equal( jQuery( "#floatTest" ).css( "float" ), "right", "Modified CSS float using \"float\": Assert float is right" );
@@ -111,7 +111,7 @@ QUnit.test( "css(String|Hash)", function( assert ) {
 
 	assert.strictEqual( child.css( "x-fake" ), undefined, "Make sure undefined is returned from css(nonexistent)." );
 
-	div = jQuery( "<div/>" ).css( { position: "absolute", "z-index": 1000 } ).appendTo( "#qunit-fixture" );
+	div = jQuery( "<div></div>" ).css( { position: "absolute", "z-index": 1000 } ).appendTo( "#qunit-fixture" );
 	assert.strictEqual( div.css( "z-index" ), "1000",
 		"Make sure that a string z-index is returned from css('z-index') (#14432)." );
 } );
@@ -569,11 +569,11 @@ QUnit.test( "show() resolves correct default display for detached nodes", functi
 	div.show().appendTo( "#qunit-fixture" );
 	assert.equal( div.css( "display" ), "block", "Make sure a detached, pre-hidden( through inline style ) div is visible." );
 
-	span = jQuery( "<span class='hidden'/>" );
+	span = jQuery( "<span class='hidden'></span>" );
 	span.show().appendTo( "#qunit-fixture" );
 	assert.equal( span.css( "display" ), "inline", "Make sure a detached, pre-hidden( through stylesheets ) span has default display." );
 
-	span = jQuery( "<span style='display: inline'/>" );
+	span = jQuery( "<span style='display: inline'></span>" );
 	span.show().appendTo( "#qunit-fixture" );
 	assert.equal( span.css( "display" ), "inline", "Make sure a detached, pre-hidden( through inline style ) span has default display." );
 
@@ -606,12 +606,12 @@ QUnit.test( "show() resolves correct default display for detached nodes", functi
 	assert.equal( div.css( "display" ), "block", "Make sure a pre-created element has default display." );
 	div.remove();
 
-	div = jQuery( "<div style='display: inline'/>" );
+	div = jQuery( "<div style='display: inline'></div>" );
 	div.show().appendTo( "#qunit-fixture" );
 	assert.equal( div.css( "display" ), "inline", "Make sure that element has same display when it was created." );
 	div.remove();
 
-	tr = jQuery( "<tr/>" );
+	tr = jQuery( "<tr></tr>" );
 	jQuery( "#table" ).append( tr );
 	trDisplay = tr.css( "display" );
 	tr.detach().hide().show();
@@ -619,7 +619,7 @@ QUnit.test( "show() resolves correct default display for detached nodes", functi
 	assert.equal( tr[ 0 ].style.display, trDisplay, "For detached tr elements, display should always be like for attached trs" );
 	tr.remove();
 
-	span = jQuery( "<span/>" ).hide().show();
+	span = jQuery( "<span></span>" ).hide().show();
 	assert.equal( span[ 0 ].style.display, "inline", "For detached span elements, display should always be inline" );
 	span.remove();
 } );
@@ -761,9 +761,9 @@ QUnit.test( "computed margins (trac-3333; gh-2237)", function( assert ) {
 QUnit.test( "box model properties incorrectly returning % instead of px, see #10639 and #12088", function( assert ) {
 	assert.expect( 2 );
 
-	var container = jQuery( "<div/>" ).width( 400 ).appendTo( "#qunit-fixture" ),
-		el = jQuery( "<div/>" ).css( { "width": "50%", "marginRight": "50%" } ).appendTo( container ),
-		el2 = jQuery( "<div/>" ).css( { "width": "50%", "minWidth": "300px", "marginLeft": "25%" } ).appendTo( container );
+	var container = jQuery( "<div></div>" ).width( 400 ).appendTo( "#qunit-fixture" ),
+		el = jQuery( "<div></div>" ).css( { "width": "50%", "marginRight": "50%" } ).appendTo( container ),
+		el2 = jQuery( "<div></div>" ).css( { "width": "50%", "minWidth": "300px", "marginLeft": "25%" } ).appendTo( container );
 
 	assert.equal( el.css( "marginRight" ), "200px", "css('marginRight') returning % instead of px, see #10639" );
 	assert.equal( el2.css( "marginLeft" ), "100px", "css('marginLeft') returning incorrect pixel value, see #12088" );
@@ -807,15 +807,15 @@ QUnit.test( "can't get css for disconnected in IE<9, see #10254 and #8388", func
 	assert.expect( 2 );
 	var span, div;
 
-	span = jQuery( "<span/>" ).css( "background-image", "url(data/1x1.jpg)" );
+	span = jQuery( "<span></span>" ).css( "background-image", "url(data/1x1.jpg)" );
 	assert.notEqual( span.css( "background-image" ), null, "can't get background-image in IE<9, see #10254" );
 
-	div = jQuery( "<div/>" ).css( "top", 10 );
+	div = jQuery( "<div></div>" ).css( "top", 10 );
 	assert.equal( div.css( "top" ), "10px", "can't get top in IE<9, see #8388" );
 } );
 
 QUnit.test( "can't get background-position in IE<9, see #10796", function( assert ) {
-	var div = jQuery( "<div/>" ).appendTo( "#qunit-fixture" ),
+	var div = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" ),
 		units = [
 			"0 0",
 			"12px 12px",
@@ -1135,7 +1135,7 @@ QUnit.test( "Make sure initialized display value for disconnected nodes is corre
 	var done = assert.async();
 
 	var display = jQuery( "#display" ).css( "display" ),
-		div = jQuery( "<div/>" );
+		div = jQuery( "<div></div>" );
 
 	assert.equal( div.css( "display", "inline" ).hide().show().appendTo( "body" ).css( "display" ), "inline", "Initialized display value has returned" );
 	div.remove();
@@ -1159,7 +1159,7 @@ QUnit.test( "Make sure initialized display value for disconnected nodes is corre
 QUnit.test( "show() after hide() should always set display to initial value (#14750)", function( assert ) {
 	assert.expect( 1 );
 
-	var div = jQuery( "<div />" ),
+	var div = jQuery( "<div></div>" ),
 		fixture = jQuery( "#qunit-fixture" );
 
 	fixture.append( div );
@@ -1180,7 +1180,7 @@ QUnit.test( "show() after hide() should always set display to initial value (#14
 		QUnit.test( "Don't append px to CSS \"order\" value (#14049)", function( assert ) {
 			assert.expect( 1 );
 
-			var $elem = jQuery( "<div/>" );
+			var $elem = jQuery( "<div></div>" );
 
 			$elem.css( "order", 2 );
 			assert.equal( $elem.css( "order" ), "2", "2 on order" );
@@ -1259,7 +1259,7 @@ QUnit.test( "Do not throw on frame elements from css method (#15098)", function(
 		resetCssPropsFor( "appearance" );
 		resetCssPropsFor( "transform" );
 
-		elem = jQuery( "<div/>" )
+		elem = jQuery( "<div></div>" )
 			.css( {
 				msAppearance: "none",
 				appearance: "none",
@@ -1284,7 +1284,7 @@ QUnit.test( "Do not throw on frame elements from css method (#15098)", function(
 		function( assert ) {
 			assert.expect( 1 );
 
-			var elem = jQuery( "<div/>" ),
+			var elem = jQuery( "<div></div>" ),
 				style = elem[ 0 ].style;
 			style.MozFakeProperty = "old value";
 			elem.css( "fakeProperty", "new value" );
