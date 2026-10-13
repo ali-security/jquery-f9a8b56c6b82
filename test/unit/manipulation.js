@@ -2659,3 +2659,73 @@ QUnit.test( "Make sure col element is appended correctly", function( assert ) {
 
 	assert.strictEqual( table.find( "td" ).width(), 150 );
 } );
+
+// Support: IE9
+// IE9 replaces <option> tags with their contents when inserted outside of
+// the select element so it still needs the <select> wrapper there.
+QUnit[ /msie 9\.0/i.test( navigator.userAgent ) ? "skip" : "test" ](
+	"<option> and <optgroup> are not wrapped in <select> (gh-4647)",
+	function( assert ) {
+		assert.expect( 16 );
+
+		jQuery.each( {
+			option: "<option>a</option></select><b>b</b>",
+			optgroup: "<optgroup><option>a</option></optgroup></select><b>b</b>"
+		}, function( tag, html ) {
+			var parsed = jQuery( html ),
+				fragment = jQuery.parseHTML( html ),
+				htmlDiv = jQuery( "<div></div>" ).html( html ),
+				appendDiv = jQuery( "<div></div>" ).append( html );
+
+			assert.strictEqual( parsed.length, 2, tag + ": jQuery( html ) yields two nodes" );
+			assert.ok( jQuery.nodeName( parsed[ 0 ], tag ) && jQuery.nodeName( parsed[ 1 ], "b" ),
+				tag + ": jQuery( html ) keeps the <" + tag + "> and the trailing <b>" );
+
+			assert.strictEqual( fragment.length, 2, tag + ": jQuery.parseHTML yields two nodes" );
+			assert.ok( jQuery.nodeName( fragment[ 0 ], tag ),
+				tag + ": jQuery.parseHTML keeps the <" + tag + ">" );
+
+			assert.strictEqual( htmlDiv.children().length, 2,
+				tag + ": .html() inserts two elements" );
+			assert.ok( jQuery.nodeName( htmlDiv[ 0 ].firstChild, tag ),
+				tag + ": .html() keeps the <" + tag + ">" );
+
+			assert.strictEqual( appendDiv.children().length, 2,
+				tag + ": .append() inserts two elements" );
+			assert.ok( jQuery.nodeName( appendDiv[ 0 ].firstChild, tag ),
+				tag + ": .append() keeps the <" + tag + ">" );
+		} );
+	}
+);
+
+// Test from https://github.com/jquery/jquery/security/advisories/GHSA-jpcq-cgw6-v4j6
+// Support: IE9
+// IE9 still uses the <select> wrapper for <option>, see above.
+QUnit[ /msie 9\.0/i.test( navigator.userAgent ) ? "skip" : "test" ](
+	"Sanitized HTML with <option> doesn't get unsanitized (gh-4647)",
+	function( assert ) {
+		var done = assert.async(),
+			container = jQuery( "<div></div>" ).appendTo( "#qunit-fixture" ),
+			payloads = [
+				"<option><style></option></select><img src=url404 onerror=xss(0)></style>",
+				"<optgroup><style></optgroup></select><img src=url404 onerror=xss(1)></style>"
+			];
+
+		assert.expect( payloads.length );
+
+		Globals.register( "xss" );
+		window.xss = sinon.spy();
+
+		jQuery.each( payloads, function( i, payload ) {
+			jQuery( "<div></div>" ).appendTo( container ).html( payload );
+		} );
+
+		setTimeout( function() {
+			jQuery.each( payloads, function( i, payload ) {
+				assert.ok( window.xss.withArgs( i ).notCalled,
+					"Insecure code wasn't executed, input: " + payload );
+			} );
+			done();
+		}, 1000 );
+	}
+);
